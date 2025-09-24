@@ -1,0 +1,32 @@
+# FastAPI and web framework dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+
+# PyTorch and ML dependencies
+torch==2.1.1
+torchvision==0.16.1
+torchaudio==2.1.1
+
+# Diffusers and image generation
+diffusers==0.24.0
+transformers==4.36.0
+accelerate==0.25.0
+
+# Image processing
+Pillow==10.1.0
+numpy==1.24.3
+
+# HTTP client for model downloads
+requests==2.31.0
+
+# Logging and monitoring
+python-multipart==0.0.6
+
+# Development and testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+
+# Environment and configuration
+python-dotenv==1.0.0

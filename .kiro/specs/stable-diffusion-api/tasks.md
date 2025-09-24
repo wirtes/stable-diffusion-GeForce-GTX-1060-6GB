@@ -1,13 +1,13 @@
 # Implementation Plan
 
-- [ ] 1. Set up project structure and dependencies
+- [x] 1. Set up project structure and dependencies
   - Create directory structure for API, models, services, and configuration
   - Set up requirements.txt with FastAPI, PyTorch, diffusers, and other dependencies
   - Create basic project configuration files
   - _Requirements: 4.1, 4.3_
 
-- [ ] 2. Implement data models and validation
-- [ ] 2.1 Create Pydantic request and response models
+- [-] 2. Implement data models and validation
+- [-] 2.1 Create Pydantic request and response models
   - Write ImageGenerationRequest model with validation for prompt, steps, dimensions, and seed
   - Write ImageGenerationResponse and GenerationMetadata models
   - Write ErrorResponse model for error handling
