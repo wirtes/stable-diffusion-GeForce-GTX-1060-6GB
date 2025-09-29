@@ -3,10 +3,10 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.5.0
 
-# PyTorch and ML dependencies
-torch==2.1.1
-torchvision==0.16.1
-torchaudio==2.1.1
+# PyTorch and ML dependencies (CUDA 11.8 compatible)
+torch==2.1.1+cu118
+torchvision==0.16.1+cu118
+torchaudio==2.1.1+cu118
 
 # Diffusers and image generation
 diffusers==0.24.0
@@ -30,3 +30,7 @@ httpx==0.25.2
 
 # Environment and configuration
 python-dotenv==1.0.0
+
+# Additional dependencies for stable diffusion
+safetensors==0.4.1
+xformers==0.0.22.post7

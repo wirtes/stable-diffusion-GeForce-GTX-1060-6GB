@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  stable-diffusion-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - MODEL_CACHE_DIR=/app/models
+      - MAX_CONCURRENT_REQUESTS=1
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./models:/app/models
+      - ./.env:/app/.env
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        limits:
+          memory: 8G
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Development variant with volume mounts for code changes
+  stable-diffusion-api-dev:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - MODEL_CACHE_DIR=/app/models
+      - MAX_CONCURRENT_REQUESTS=1
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - .:/app
+      - ./models:/app/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        limits:
+          memory: 8G
+    restart: unless-stopped
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    profiles:
+      - dev

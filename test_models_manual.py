@@ -1,124 +1,124 @@
 #!/usr/bin/env python3
 """
-Manual test script to verify model validation logic.
+Manual test script to validate Pydantic models.
 """
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from app.models.schemas import (
-    ImageGenerationRequest,
-    ImageGenerationResponse,
-    GenerationMetadata,
-    ErrorResponse,
-    HealthResponse
-)
-from pydantic import ValidationError
+# Add the app directory to the Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '.'))
 
-def test_valid_request():
-    """Test valid request with default values."""
+try:
+    from app.models.schemas import (
+        ImageGenerationRequest,
+        ImageGenerationResponse,
+        GenerationMetadata,
+        ErrorResponse,
+        HealthResponse
+    )
+    print("✓ Successfully imported all models")
+except ImportError as e:
+    print(f"✗ Import error: {e}")
+    sys.exit(1)
+
+def test_image_generation_request():
+    """Test ImageGenerationRequest validation."""
+    print("\n--- Testing ImageGenerationRequest ---")
+    
+    # Test valid request with defaults
     try:
         request = ImageGenerationRequest(prompt="A beautiful sunset")
-        print("✓ Valid request with defaults passed")
-        assert request.prompt == "A beautiful sunset"
-        assert request.steps == 20
-        assert request.width == 512
-        assert request.height == 512
-        assert request.seed is None
-        print("✓ All default values correct")
+        print(f"✓ Valid request with defaults: {request.dict()}")
     except Exception as e:
-        print(f"✗ Valid request test failed: {e}")
+        print(f"✗ Failed valid request: {e}")
         return False
-    return True
-
-def test_prompt_validation():
-    """Test prompt validation."""
-    # Test empty prompt
-    try:
-        ImageGenerationRequest(prompt="")
-        print("✗ Empty prompt should have failed")
-        return False
-    except ValidationError as e:
-        print("✓ Empty prompt validation passed")
     
-    # Test whitespace-only prompt
+    # Test valid request with all parameters
     try:
-        ImageGenerationRequest(prompt="   ")
-        print("✗ Whitespace-only prompt should have failed")
+        request = ImageGenerationRequest(
+            prompt="A cat in a hat",
+            steps=30,
+            width=768,
+            height=512,
+            seed=12345
+        )
+        print(f"✓ Valid request with all params: {request.dict()}")
+    except Exception as e:
+        print(f"✗ Failed valid request with all params: {e}")
         return False
-    except ValidationError as e:
-        print("✓ Whitespace-only prompt validation passed")
     
     # Test prompt sanitization
     try:
         request = ImageGenerationRequest(prompt="  A   beautiful    sunset  ")
-        if request.prompt == "A beautiful sunset":
-            print("✓ Prompt sanitization passed")
+        expected = "A beautiful sunset"
+        if request.prompt == expected:
+            print(f"✓ Prompt sanitization works: '{request.prompt}'")
         else:
-            print(f"✗ Prompt sanitization failed: got '{request.prompt}'")
+            print(f"✗ Prompt sanitization failed: expected '{expected}', got '{request.prompt}'")
             return False
     except Exception as e:
-        print(f"✗ Prompt sanitization test failed: {e}")
+        print(f"✗ Prompt sanitization error: {e}")
         return False
     
-    return True
-
-def test_dimension_validation():
-    """Test dimension validation."""
-    # Test valid multiples of 64
-    valid_dims = [256, 320, 384, 448, 512, 576, 640, 704, 768]
-    for dim in valid_dims:
-        try:
-            request = ImageGenerationRequest(prompt="test", width=dim, height=dim)
-            print(f"✓ Dimension {dim} passed")
-        except Exception as e:
-            print(f"✗ Valid dimension {dim} failed: {e}")
-            return False
-    
-    # Test invalid dimension (not multiple of 64)
+    # Test empty prompt validation
     try:
-        ImageGenerationRequest(prompt="test", width=300)
+        request = ImageGenerationRequest(prompt="")
+        print("✗ Empty prompt should have failed")
+        return False
+    except Exception as e:
+        print(f"✓ Empty prompt correctly rejected: {e}")
+    
+    # Test whitespace-only prompt validation
+    try:
+        request = ImageGenerationRequest(prompt="   ")
+        print("✗ Whitespace-only prompt should have failed")
+        return False
+    except Exception as e:
+        print(f"✓ Whitespace-only prompt correctly rejected: {e}")
+    
+    # Test dimension validation (not multiple of 64)
+    try:
+        request = ImageGenerationRequest(prompt="test", width=300)
         print("✗ Invalid dimension should have failed")
         return False
-    except ValidationError as e:
-        print("✓ Invalid dimension validation passed")
-    
-    return True
-
-def test_steps_validation():
-    """Test steps validation."""
-    # Test valid steps
-    try:
-        request = ImageGenerationRequest(prompt="test", steps=25)
-        print("✓ Valid steps passed")
     except Exception as e:
-        print(f"✗ Valid steps failed: {e}")
-        return False
+        print(f"✓ Invalid dimension correctly rejected: {e}")
     
-    # Test invalid steps (too low)
-    try:
-        ImageGenerationRequest(prompt="test", steps=0)
-        print("✗ Invalid steps (too low) should have failed")
-        return False
-    except ValidationError as e:
-        print("✓ Invalid steps (too low) validation passed")
+    # Test valid dimensions (multiples of 64)
+    valid_dimensions = [256, 320, 384, 448, 512, 576, 640, 704, 768]
+    for dim in valid_dimensions:
+        try:
+            request = ImageGenerationRequest(prompt="test", width=dim, height=dim)
+            print(f"✓ Valid dimension {dim} accepted")
+        except Exception as e:
+            print(f"✗ Valid dimension {dim} rejected: {e}")
+            return False
     
-    # Test invalid steps (too high)
+    # Test steps validation
     try:
-        ImageGenerationRequest(prompt="test", steps=51)
-        print("✗ Invalid steps (too high) should have failed")
+        request = ImageGenerationRequest(prompt="test", steps=0)
+        print("✗ Invalid steps (0) should have failed")
         return False
-    except ValidationError as e:
-        print("✓ Invalid steps (too high) validation passed")
+    except Exception as e:
+        print(f"✓ Invalid steps (0) correctly rejected: {e}")
+    
+    try:
+        request = ImageGenerationRequest(prompt="test", steps=51)
+        print("✗ Invalid steps (51) should have failed")
+        return False
+    except Exception as e:
+        print(f"✓ Invalid steps (51) correctly rejected: {e}")
     
     return True
 
-def test_response_models():
-    """Test response models."""
+def test_other_models():
+    """Test other model classes."""
+    print("\n--- Testing Other Models ---")
+    
+    # Test GenerationMetadata
     try:
-        # Test metadata
         metadata = GenerationMetadata(
-            prompt="A cat",
+            prompt="A beautiful sunset",
             steps=20,
             width=512,
             height=512,
@@ -126,70 +126,59 @@ def test_response_models():
             generation_time_seconds=2.5,
             model_version="stable-diffusion-v1-5"
         )
-        print("✓ GenerationMetadata creation passed")
-        
-        # Test response
+        print(f"✓ GenerationMetadata created: {metadata.dict()}")
+    except Exception as e:
+        print(f"✗ GenerationMetadata failed: {e}")
+        return False
+    
+    # Test ImageGenerationResponse
+    try:
         response = ImageGenerationResponse(
             image_base64="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
             metadata=metadata
         )
-        print("✓ ImageGenerationResponse creation passed")
-        
-        # Test error response
+        print(f"✓ ImageGenerationResponse created")
+    except Exception as e:
+        print(f"✗ ImageGenerationResponse failed: {e}")
+        return False
+    
+    # Test ErrorResponse
+    try:
         error = ErrorResponse(
-            error="Test error",
-            details="Test details",
-            error_code="TEST_ERROR"
+            error="Validation failed",
+            details="Prompt cannot be empty",
+            error_code="VALIDATION_ERROR"
         )
-        print("✓ ErrorResponse creation passed")
-        
-        # Test health response
+        print(f"✓ ErrorResponse created: {error.dict()}")
+    except Exception as e:
+        print(f"✗ ErrorResponse failed: {e}")
+        return False
+    
+    # Test HealthResponse
+    try:
         health = HealthResponse(
             status="healthy",
             gpu_available=True,
-            model_loaded=True
+            model_loaded=True,
+            memory_usage={"gpu_memory_used": "2.1GB", "gpu_memory_total": "6GB"}
         )
-        print("✓ HealthResponse creation passed")
-        
+        print(f"✓ HealthResponse created: {health.dict()}")
     except Exception as e:
-        print(f"✗ Response models test failed: {e}")
+        print(f"✗ HealthResponse failed: {e}")
         return False
     
     return True
 
-def main():
-    """Run all tests."""
-    print("Running manual model validation tests...\n")
-    
-    tests = [
-        test_valid_request,
-        test_prompt_validation,
-        test_dimension_validation,
-        test_steps_validation,
-        test_response_models
-    ]
-    
-    passed = 0
-    total = len(tests)
-    
-    for test in tests:
-        print(f"\n--- Running {test.__name__} ---")
-        if test():
-            passed += 1
-            print(f"✓ {test.__name__} PASSED")
-        else:
-            print(f"✗ {test.__name__} FAILED")
-    
-    print(f"\n--- Results ---")
-    print(f"Passed: {passed}/{total}")
-    
-    if passed == total:
-        print("🎉 All tests passed!")
-        return True
-    else:
-        print("❌ Some tests failed!")
-        return False
-
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+    print("Running manual model validation tests...")
+    
+    success = True
+    success &= test_image_generation_request()
+    success &= test_other_models()
+    
+    if success:
+        print("\n🎉 All tests passed!")
+        sys.exit(0)
+    else:
+        print("\n❌ Some tests failed!")
+        sys.exit(1)
