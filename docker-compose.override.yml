@@ -1,0 +1,21 @@
+# Docker Compose override for development
+# This file is automatically loaded by docker-compose and provides
+# development-friendly defaults
+
+version: '3.8'
+
+services:
+  stable-diffusion-api-dev:
+    # Override for development convenience
+    environment:
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+    volumes:
+      # Mount source code for live reloading
+      - .:/app
+      # Preserve model cache
+      - stable_diffusion_models:/app/models
+    # Use development profile by default
+    profiles:
+      - development
+      - ""  # Default profile

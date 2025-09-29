@@ -43,7 +43,7 @@ class TestImageGenerationRequest:
         """Test that empty prompt raises validation error."""
         with pytest.raises(ValidationError) as exc_info:
             ImageGenerationRequest(prompt="")
-        assert "Prompt cannot be empty" in str(exc_info.value)
+        assert "String should have at least 1 character" in str(exc_info.value)
     
     def test_prompt_validation_whitespace_only(self):
         """Test that whitespace-only prompt raises validation error."""

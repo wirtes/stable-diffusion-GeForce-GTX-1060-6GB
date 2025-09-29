@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stable Diffusion API - Web Interface</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result-section {
+            text-align: center;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .image-container {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 40px;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .image-placeholder {
+            color: #6c757d;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .metadata {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .metadata h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .metadata-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .metadata-item:last-child {
+            border-bottom: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .examples {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .examples h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .example-prompts {
+            display: grid;
+            gap: 10px;
+        }
+
+        .example-prompt {
+            padding: 10px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .example-prompt:hover {
+            background: #e9ecef;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Stable Diffusion API</h1>
+            <p>Generate beautiful images from text descriptions using AI</p>
+        </div>
+
+        <div class="content">
+            <div class="form-section">
+                <form id="generate-form">
+                    <div class="form-group">
+                        <label for="prompt">✨ Describe your image:</label>
+                        <textarea 
+                            id="prompt" 
+                            placeholder="A beautiful sunset over mountains, digital art, highly detailed..."
+                            required
+                        ></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="steps">🔄 Steps (1-50):</label>
+                            <input type="number" id="steps" min="1" max="50" value="20">
+                        </div>
+                        <div class="form-group">
+                            <label for="seed">🎲 Seed (optional):</label>
+                            <input type="number" id="seed" placeholder="Random">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="width">📐 Width:</label>
+                            <select id="width">
+                                <option value="256">256px</option>
+                                <option value="320">320px</option>
+                                <option value="384">384px</option>
+                                <option value="448">448px</option>
+                                <option value="512" selected>512px</option>
+                                <option value="576">576px</option>
+                                <option value="640">640px</option>
+                                <option value="704">704px</option>
+                                <option value="768">768px</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="height">📏 Height:</label>
+                            <select id="height">
+                                <option value="256">256px</option>
+                                <option value="320">320px</option>
+                                <option value="384">384px</option>
+                                <option value="448">448px</option>
+                                <option value="512" selected>512px</option>
+                                <option value="576">576px</option>
+                                <option value="640">640px</option>
+                                <option value="704">704px</option>
+                                <option value="768">768px</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="button" id="generate-btn">
+                        🚀 Generate Image
+                    </button>
+                </form>
+
+                <div class="examples">
+                    <h3>💡 Example Prompts:</h3>
+                    <div class="example-prompts">
+                        <div class="example-prompt" onclick="setPrompt('A majestic dragon flying over a medieval castle at sunset, fantasy art')">
+                            A majestic dragon flying over a medieval castle at sunset, fantasy art
+                        </div>
+                        <div class="example-prompt" onclick="setPrompt('A cozy coffee shop in a rainy city, warm lighting, digital painting')">
+                            A cozy coffee shop in a rainy city, warm lighting, digital painting
+                        </div>
+                        <div class="example-prompt" onclick="setPrompt('A futuristic cyberpunk city with neon lights, night scene, highly detailed')">
+                            A futuristic cyberpunk city with neon lights, night scene, highly detailed
+                        </div>
+                        <div class="example-prompt" onclick="setPrompt('A serene mountain lake with reflection, autumn colors, photorealistic')">
+                            A serene mountain lake with reflection, autumn colors, photorealistic
+                        </div>
+                        <div class="example-prompt" onclick="setPrompt('A cute robot gardener tending to flowers, cartoon style, colorful')">
+                            A cute robot gardener tending to flowers, cartoon style, colorful
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <div id="status" class="status" style="display: none;"></div>
+                
+                <div class="image-container" id="image-container">
+                    <div class="image-placeholder">
+                        <p>🖼️ Your generated image will appear here</p>
+                        <p style="margin-top: 10px; font-size: 14px; opacity: 0.7;">
+                            Enter a prompt and click "Generate Image" to get started
+                        </p>
+                    </div>
+                </div>
+
+                <div id="metadata" class="metadata" style="display: none;">
+                    <h3>📊 Generation Details</h3>
+                    <div id="metadata-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class StableDiffusionClient {
+            constructor(baseUrl = 'http://localhost:8000') {
+                this.baseUrl = baseUrl;
+            }
+
+            async generateImage(options = {}) {
+                const {
+                    prompt,
+                    steps = 20,
+                    width = 512,
+                    height = 512,
+                    seed = null
+                } = options;
+
+                if (!prompt) {
+                    throw new Error('Prompt is required');
+                }
+
+                const payload = {
+                    prompt,
+                    steps,
+                    width,
+                    height
+                };
+
+                if (seed !== null && seed !== '') {
+                    payload.seed = parseInt(seed);
+                }
+
+                const response = await fetch(`${this.baseUrl}/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`${errorData.error}: ${errorData.details || ''}`);
+                }
+
+                return await response.json();
+            }
+
+            async healthCheck() {
+                try {
+                    const response = await fetch(`${this.baseUrl}/health`);
+                    return await response.json();
+                } catch (error) {
+                    return { status: 'error', message: error.message };
+                }
+            }
+
+            displayImage(imageBase64, containerId) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                
+                const img = document.createElement('img');
+                img.src = `data:image/png;base64,${imageBase64}`;
+                img.alt = 'Generated image';
+                
+                container.appendChild(img);
+            }
+        }
+
+        const client = new StableDiffusionClient();
+        const form = document.getElementById('generate-form');
+        const generateBtn = document.getElementById('generate-btn');
+        const status = document.getElementById('status');
+        const imageContainer = document.getElementById('image-container');
+        const metadata = document.getElementById('metadata');
+        const metadataContent = document.getElementById('metadata-content');
+
+        // Check service health on page load
+        client.healthCheck().then(health => {
+            if (health.status === 'healthy') {
+                showStatus('🟢 Service is ready and healthy', 'success');
+            } else {
+                showStatus('🔴 Service is not available. Please check if the API is running.', 'error');
+                generateBtn.disabled = true;
+            }
+        }).catch(() => {
+            showStatus('🔴 Cannot connect to API service. Please check if it\'s running on localhost:8000', 'error');
+            generateBtn.disabled = true;
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const prompt = document.getElementById('prompt').value.trim();
+            if (!prompt) {
+                showStatus('⚠️ Please enter a prompt', 'error');
+                return;
+            }
+
+            const options = {
+                prompt: prompt,
+                steps: parseInt(document.getElementById('steps').value),
+                width: parseInt(document.getElementById('width').value),
+                height: parseInt(document.getElementById('height').value)
+            };
+
+            const seedValue = document.getElementById('seed').value.trim();
+            if (seedValue) {
+                options.seed = parseInt(seedValue);
+            }
+
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span class="loading"></span>Generating...';
+            showStatus('🎨 Generating your image, please wait...', 'info');
+            
+            // Hide previous results
+            metadata.style.display = 'none';
+            imageContainer.innerHTML = '<div class="image-placeholder"><div class="loading" style="margin: 0 auto 20px;"></div><p>Generating image...</p></div>';
+
+            try {
+                const result = await client.generateImage(options);
+                
+                // Display the image
+                client.displayImage(result.image_base64, 'image-container');
+                
+                // Show metadata
+                displayMetadata(result.metadata);
+                
+                showStatus(`✅ Image generated successfully in ${result.metadata.generation_time_seconds.toFixed(2)} seconds!`, 'success');
+                
+            } catch (error) {
+                showStatus(`❌ Error: ${error.message}`, 'error');
+                imageContainer.innerHTML = '<div class="image-placeholder"><p>❌ Generation failed</p><p style="margin-top: 10px; font-size: 14px; opacity: 0.7;">Please try again</p></div>';
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '🚀 Generate Image';
+            }
+        });
+
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function displayMetadata(meta) {
+            const items = [
+                { label: 'Prompt', value: meta.prompt },
+                { label: 'Steps', value: meta.steps },
+                { label: 'Dimensions', value: `${meta.width} × ${meta.height}` },
+                { label: 'Seed', value: meta.seed },
+                { label: 'Generation Time', value: `${meta.generation_time_seconds.toFixed(2)}s` },
+                { label: 'Model Version', value: meta.model_version }
+            ];
+
+            metadataContent.innerHTML = items.map(item => 
+                `<div class="metadata-item">
+                    <strong>${item.label}:</strong>
+                    <span>${item.value}</span>
+                </div>`
+            ).join('');
+
+            metadata.style.display = 'block';
+        }
+
+        function setPrompt(promptText) {
+            document.getElementById('prompt').value = promptText;
+        }
+
+        // Add download functionality
+        function downloadImage() {
+            const img = document.querySelector('#image-container img');
+            if (img) {
+                const link = document.createElement('a');
+                link.download = 'generated-image.png';
+                link.href = img.src;
+                link.click();
+            }
+        }
+
+        // Add keyboard shortcut for generation (Ctrl+Enter)
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                if (!generateBtn.disabled) {
+                    form.dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+    </script>
+</body>
+</html>
